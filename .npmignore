@@ -1,0 +1,30 @@
+# Source files
+src/
+
+# Configuration files
+.storybook/
+.babelrc
+.eslintrc.js
+jest.config.js
+jest.setup.js
+rollup.config.js
+tsconfig.json
+
+# Build tools
+node_modules/
+storybook-static/
+
+# Test files
+**/*.test.tsx
+**/*.stories.tsx
+**/*.stories.mdx
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+*.log
+
+# Git files
+.git/
+.gitignore 
