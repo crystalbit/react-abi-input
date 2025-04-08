@@ -231,3 +231,58 @@
 .abi-input__parameter--bytes {
   background-color: #f6f8fa;
 }
+
+/* Preview section */
+.abi-input__preview {
+  margin: 10px 0 15px;
+  padding: 10px 15px;
+  border-radius: 6px;
+  background-color: #f5f7fa;
+  border-left: 3px solid #3498db;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  max-width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+@keyframes preview-update {
+  0% {
+    background-color: #f5f7fa;
+  }
+
+  50% {
+    background-color: #e1f0fa;
+  }
+
+  100% {
+    background-color: #f5f7fa;
+  }
+}
+
+.abi-input__preview--updated {
+  animation: preview-update 1s ease;
+}
+
+.abi-input__preview--valid {
+  border-left-color: #2ecc71;
+}
+
+.abi-input__preview--invalid {
+  border-left-color: #e74c3c;
+}
+
+.abi-input__preview-label {
+  font-weight: 600;
+  color: #555;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+
+.abi-input__preview-value {
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  color: #2c3e50;
+  overflow-x: auto;
+  max-width: 100%;
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './AbiInput.css';
 import { parseAbiItem } from 'viem';
 import { linearizeAbi, LinearizedParameter } from '../../helpers/linearizeAbi';
@@ -36,6 +36,8 @@ export const AbiInput: React.FC<AbiInputProps> = ({
   const [error, setError] = useState<string>('');
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
   const [paramValidity, setParamValidity] = useState<Record<string, boolean>>({});
+  const [valuePreview, setValuePreview] = useState<string>('');
+  const [previewUpdated, setPreviewUpdated] = useState<boolean>(false);
 
   useEffect(() => {
     validateAbi(abi);
@@ -56,7 +58,8 @@ export const AbiInput: React.FC<AbiInputProps> = ({
           initialValues[param.name] = '';
           // Tuple types don't need user input, so mark as valid initially
           const isTuple = param.type.startsWith('tuple') || param.type.includes('tuple[');
-          initialValidity[param.name] = isTuple;
+          const isString = param.type === 'string';
+          initialValidity[param.name] = isTuple || isString;
         }
       });
 
@@ -69,6 +72,16 @@ export const AbiInput: React.FC<AbiInputProps> = ({
     if (linearizedAbi.length > 0 && onParamChange) {
       const allValid = Object.values(paramValidity).every(valid => valid);
       onParamChange(paramValues, allValid);
+    }
+
+    // Update the value preview whenever parameters change
+    updateValuePreview();
+
+    // Trigger animation when preview updates
+    if (Object.keys(paramValues).length > 0) {
+      setPreviewUpdated(true);
+      const timer = setTimeout(() => setPreviewUpdated(false), 1000);
+      return () => clearTimeout(timer);
     }
   }, [paramValues, paramValidity]);
 
@@ -121,6 +134,85 @@ export const AbiInput: React.FC<AbiInputProps> = ({
     ].filter(Boolean).join(' ');
   };
 
+  // Format value for preview based on type
+  const formatValueForPreview = (value: string, type: string): string => {
+    if (type === 'string') {
+      return `"${value}"`;
+    }
+
+    // Handle empty values
+    if (value === '[]') {
+      return '[]';
+    }
+
+    // Format arrays
+    if (type.includes('[')) {
+      try {
+        const baseType = type.replace(/\[\d*\]$/, '');
+        const parsedArray = JSON.parse(value);
+        if (!Array.isArray(parsedArray)) return '[]';
+
+        // Format each item based on base type
+        const formattedItems = parsedArray.map(item => {
+          if (baseType.startsWith('string')) {
+            return `"${item}"`;
+          } else if (baseType.startsWith('tuple')) {
+            return '(...)'; // Simplified tuple representation
+          } else {
+            return item;
+          }
+        });
+
+        return `[${formattedItems.join(', ')}]`;
+      } catch (e) {
+        return '[]';
+      }
+    }
+
+    // Format string values with quotes
+    if (type === 'string') {
+      return `"${value}"`;
+    }
+
+    // Format tuples
+    if (type.startsWith('tuple')) {
+      // throw error - this shouldn't be called
+      throw new Error('Tuple types should not be formatted');
+    }
+
+    // Return as is for numeric types, addresses, etc.
+    return value;
+  };
+
+  // Generate the parameter preview string
+  const updateValuePreview = () => {
+    if (linearizedAbi.length === 0) {
+      setValuePreview('');
+      return;
+    }
+
+    // Get top-level parameters only (depth 0)
+    const rootParams = linearizedAbi.filter(param => param.depth === 0 && param.name);
+    if (rootParams.length === 0) {
+      setValuePreview('');
+      return;
+    }
+
+    // Format each parameter value
+    const formattedValues = rootParams.map(param => {
+      const value = param.name ? paramValues[param.name] || '' : '';
+      return formatValueForPreview(value, param.type);
+    });
+
+    setValuePreview(formattedValues.join(', '));
+  };
+
+  // Is the form fully valid (all inputs are valid)?
+  const isFormValid = useMemo(() => {
+    console.log('paramValidity', paramValidity);
+    return Object.values(paramValidity).every(Boolean);
+  }, [paramValidity]);
+
   return (
     <div className={`abi-input ${className}`} {...props}>
       {abiObject && (
@@ -128,6 +220,13 @@ export const AbiInput: React.FC<AbiInputProps> = ({
           <h3 className="abi-input__function-name">
             {(abiObject as any).name || 'Anonymous Function'}
           </h3>
+        </div>
+      )}
+
+      {valuePreview && isFormValid && (
+        <div className={`abi-input__preview ${isFormValid ? 'abi-input__preview--valid' : 'abi-input__preview--invalid'} ${previewUpdated ? 'abi-input__preview--updated' : ''}`}>
+          <span className="abi-input__preview-label">Values:</span>
+          <code className="abi-input__preview-value">{valuePreview}</code>
         </div>
       )}
 

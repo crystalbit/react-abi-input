@@ -38,6 +38,14 @@ export const Nested: Story = {
   },
 };
 
+// Arrays of basic types
+export const ArraysOfBasicTypes: Story = {
+  args: {
+    abi: "function deployCode(string memory what, uint256[])",
+  },
+};
+
+
 // Nested with array of tuples
 export const NestedWithArrayOfTuples: Story = {
   args: {
