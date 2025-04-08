@@ -65,3 +65,22 @@
 .solidity-input[data-type^="bytes"] .solidity-input__field {
   font-family: monospace;
 }
+
+/* Tuple placeholder */
+.solidity-input--tuple {
+  background-color: rgba(241, 248, 255, 0.5);
+  border-radius: 6px;
+  padding: 0.5rem;
+  border-left: 2px solid #0366d6;
+}
+
+.solidity-input__tuple-placeholder {
+  padding: 0.5rem;
+  border: 1px dashed #3498db;
+  border-radius: 4px;
+  color: #3498db;
+  font-size: 0.9rem;
+  text-align: center;
+  background-color: rgba(52, 152, 219, 0.05);
+  font-style: italic;
+}

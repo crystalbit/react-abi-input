@@ -38,6 +38,13 @@ export const Nested: Story = {
   },
 };
 
+// Nested with array of tuples
+export const NestedWithArrayOfTuples: Story = {
+  args: {
+    abi: "function deployCode(string memory what, (uint256 a, (uint256 b, uint256 c))[])",
+  },
+};
+
 export const EmptyAbi: Story = {
   args: {
     abi: "",

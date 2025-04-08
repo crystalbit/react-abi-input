@@ -39,28 +39,8 @@
   position: relative;
 }
 
-.abi-input__tuple-indicator {
-  position: absolute;
-  top: -0.5rem;
-  left: 0.5rem;
-  background-color: #0366d6;
-  color: white;
-  font-size: 0.75rem;
-  padding: 0.1rem 0.4rem;
-  border-radius: 3px;
-  z-index: 1;
-}
-
 .abi-input__parameter {
   margin-bottom: 0.5rem;
-}
-
-/* Make tuple types visually distinct */
-.abi-input__parameter--tuple {
-  background-color: rgba(241, 248, 255, 0.5) !important;
-  border-radius: 6px;
-  padding: 0.5rem;
-  border-left: 2px solid #0366d6 !important;
 }
 
 /* Parameter indentation based on depth */

@@ -34,13 +34,30 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
 }) => {
   const [isValid, setIsValid] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
+  const [isTuple, setIsTuple] = useState<boolean>(false);
 
   useEffect(() => {
-    validateInput(value);
-  }, [value, type]);
+    // Check if type is a tuple or array of tuples
+    const baseType = type.replace(/\[\d*\]$/, ''); // Remove array notation
+    setIsTuple(type.startsWith('tuple') || baseType === 'tuple');
+
+    // For tuple types, auto-validate as valid (actual values come from nested components)
+    if (isTuple) {
+      setIsValid(true);
+      setError('');
+      onChange(value, true);
+    } else {
+      validateInput(value);
+    }
+  }, [value, type, isTuple]);
 
   // Function to validate input based on Solidity type
   const validateInput = (inputValue: string): boolean => {
+    // Skip validation for tuple types
+    if (isTuple) {
+      return true;
+    }
+
     if (!inputValue.trim() && inputValue !== 'false') {
       setError('Value cannot be empty');
       setIsValid(false);
@@ -153,6 +170,21 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
 
     onChange(newValue, validateInput(newValue));
   };
+
+  // For tuple types, we don't show an input field as values come from nested components
+  if (isTuple) {
+    return (
+      <div className={`solidity-input ${className} solidity-input--tuple`}>
+        <div className="solidity-input__label">
+          <span className="solidity-input__name">{name}</span>
+          <span className="solidity-input__type">{type}</span>
+        </div>
+        <div className="solidity-input__tuple-placeholder">
+          {type.includes('[') ? 'Array of tuples' : 'Tuple'}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`solidity-input ${className} ${!isValid ? 'solidity-input--error' : ''}`}>

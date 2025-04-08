@@ -54,7 +54,9 @@ export const AbiInput: React.FC<AbiInputProps> = ({
       linearizedAbi.forEach(param => {
         if (param.name) {
           initialValues[param.name] = '';
-          initialValidity[param.name] = false;
+          // Tuple types don't need user input, so mark as valid initially
+          const isTuple = param.type.startsWith('tuple') || param.type.includes('tuple[');
+          initialValidity[param.name] = isTuple;
         }
       });
 
@@ -111,13 +113,11 @@ export const AbiInput: React.FC<AbiInputProps> = ({
   // Get CSS classes for a parameter
   const getParamClasses = (param: LinearizedParameter) => {
     const baseType = param.type.replace(/\[\d*\]$/, ''); // Remove array notation
-    const isTuple = param.type.startsWith('tuple') || baseType === 'tuple';
 
     return [
       'abi-input__parameter',
       `abi-input__parameter--${baseType.replace(/\d+/g, '')}`,
-      `abi-input__parameter--depth-${param.depth}`,
-      isTuple ? 'abi-input__parameter--tuple' : ''
+      `abi-input__parameter--depth-${param.depth}`
     ].filter(Boolean).join(' ');
   };
 
@@ -136,9 +136,6 @@ export const AbiInput: React.FC<AbiInputProps> = ({
           <h4 className="abi-input__parameters-title">Parameters</h4>
           {linearizedAbi.filter(param => param.name).map((param) => (
             <div key={param.name} className="abi-input__parameter-wrapper">
-              {param.type.startsWith('tuple') && param.depth === 0 && (
-                <div className="abi-input__tuple-indicator">Tuple</div>
-              )}
               <SolidityInput
                 key={param.name}
                 type={param.type}
