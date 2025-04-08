@@ -302,3 +302,16 @@
   overflow-x: auto;
   max-width: 100%;
 }
+
+.abi-input__preview-value--bytecode {
+  word-break: break-all;
+  white-space: normal;
+  display: block;
+  overflow-wrap: break-word;
+  font-size: 0.9em;
+  line-height: 1.5;
+  max-width: 100%;
+  background-color: rgba(0, 0, 0, 0.03);
+  padding: 8px;
+  border-radius: 4px;
+}

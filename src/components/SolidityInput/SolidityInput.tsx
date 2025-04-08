@@ -314,6 +314,20 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
     }
   };
 
+  // Function to set an address to the zero address
+  const setZeroAddress = () => {
+    const zeroAddress = '0x0000000000000000000000000000000000000000';
+    onChange(zeroAddress, true);
+  };
+
+  // Function to set an array item address to the zero address
+  const setArrayItemZeroAddress = (index: number) => {
+    const newItems = [...arrayItems];
+    const zeroAddress = '0x0000000000000000000000000000000000000000';
+    newItems[index] = { value: zeroAddress, isValid: true };
+    setArrayItems(newItems);
+  };
+
   const getInputType = () => {
     if (baseType.startsWith('uint') || baseType.startsWith('int')) {
       return 'number';
@@ -435,6 +449,16 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
                       className="solidity-input__field"
                       placeholder={`Enter ${baseType} value...`}
                     />
+                    {baseType === 'address' && (
+                      <button
+                        type="button"
+                        onClick={() => setArrayItemZeroAddress(index)}
+                        className="solidity-input__zero-address-button"
+                        title="Set to zero address"
+                      >
+                        0x0
+                      </button>
+                    )}
                   </div>
                 )}
                 <button
@@ -485,13 +509,25 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
           <option value="false">false</option>
         </select>
       ) : (
-        <input
-          type={getInputType()}
-          value={value}
-          onChange={handleInputChange}
-          className="solidity-input__field"
-          placeholder={`Enter ${type} value...`}
-        />
+        <div className="solidity-input__field-container">
+          <input
+            type={getInputType()}
+            value={value}
+            onChange={handleInputChange}
+            className="solidity-input__field"
+            placeholder={`Enter ${type} value...`}
+          />
+          {type === 'address' && (
+            <button
+              type="button"
+              onClick={setZeroAddress}
+              className="solidity-input__zero-address-button"
+              title="Set to zero address"
+            >
+              0x0
+            </button>
+          )}
+        </div>
       )}
 
       {!isValid && error && (

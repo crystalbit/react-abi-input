@@ -198,3 +198,42 @@
   flex: 1;
   margin-left: 0.5rem;
 }
+
+/* Field container for inputs with buttons */
+.solidity-input__field-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+
+.solidity-input__field-container .solidity-input__field {
+  flex: 1;
+}
+
+/* Zero address button */
+.solidity-input__zero-address-button {
+  background-color: #f1f8ff;
+  color: #0366d6;
+  border: 1px solid #0366d6;
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: monospace;
+  transition: all 0.2s;
+}
+
+.solidity-input__zero-address-button:hover {
+  background-color: #0366d6;
+  color: white;
+}
+
+/* Make the array item content accommodate the button */
+.solidity-input__array-item-content {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}

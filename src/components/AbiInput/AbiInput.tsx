@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import './AbiInput.css';
 import { parseAbiItem } from 'viem';
 import { linearizeAbi, LinearizedParameter } from '../../helpers/linearizeAbi';
+import { combineTx } from '../../helpers/combineTx';
 import { SolidityInput } from '../SolidityInput';
 
 export interface AbiInputProps {
@@ -39,6 +40,7 @@ export const AbiInput: React.FC<AbiInputProps> = ({
   const [valuePreview, setValuePreview] = useState<string>('');
   const [previewUpdated, setPreviewUpdated] = useState<boolean>(false);
   const [functionSignature, setFunctionSignature] = useState<string>('');
+  const [bytecode, setBytecode] = useState<string>('');
 
   useEffect(() => {
     validateAbi(abi);
@@ -78,13 +80,16 @@ export const AbiInput: React.FC<AbiInputProps> = ({
     // Update the value preview whenever parameters change
     updateValuePreview();
 
+    // Generate bytecode if all parameters are valid
+    generateBytecode();
+
     // Trigger animation when preview updates
     if (Object.keys(paramValues).length > 0) {
       setPreviewUpdated(true);
       const timer = setTimeout(() => setPreviewUpdated(false), 1000);
       return () => clearTimeout(timer);
     }
-  }, [paramValues, paramValidity]);
+  }, [paramValues, paramValidity, functionSignature]);
 
   const validateAbi = (abiString: string): boolean => {
     if (!abiString.trim()) {
@@ -216,6 +221,26 @@ export const AbiInput: React.FC<AbiInputProps> = ({
     setValuePreview(formattedValues.join(', '));
   };
 
+  // Generate bytecode using combineTx
+  const generateBytecode = () => {
+    if (!functionSignature || !isFormValid || valuePreview === '') {
+      console.log(functionSignature, isFormValid, valuePreview);
+      setBytecode('');
+      return;
+    }
+
+    try {
+      // Pass just the function signature without the "function" keyword
+      // The combineTx function will handle adding it if necessary
+      console.log('Using signature for bytecode generation:', functionSignature);
+      const calldata = combineTx(functionSignature, valuePreview);
+      setBytecode(calldata);
+    } catch (error) {
+      console.error('Error generating bytecode:', error);
+      setBytecode('');
+    }
+  };
+
   // Is the form fully valid (all inputs are valid)?
   const isFormValid = useMemo(() => {
     console.log('paramValidity', paramValidity);
@@ -243,6 +268,14 @@ export const AbiInput: React.FC<AbiInputProps> = ({
               <div className="abi-input__preview-values">
                 <span className="abi-input__preview-label">Values:</span>
                 <code className="abi-input__preview-value">{valuePreview}</code>
+              </div>
+            )}
+            {bytecode && (
+              <div className="abi-input__preview-bytecode">
+                <span className="abi-input__preview-label">Bytecode:</span>
+                <code className="abi-input__preview-value abi-input__preview-value--bytecode">
+                  {bytecode}
+                </code>
               </div>
             )}
           </div>
