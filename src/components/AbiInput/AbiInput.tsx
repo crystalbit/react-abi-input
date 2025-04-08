@@ -38,6 +38,7 @@ export const AbiInput: React.FC<AbiInputProps> = ({
   const [paramValidity, setParamValidity] = useState<Record<string, boolean>>({});
   const [valuePreview, setValuePreview] = useState<string>('');
   const [previewUpdated, setPreviewUpdated] = useState<boolean>(false);
+  const [functionSignature, setFunctionSignature] = useState<string>('');
 
   useEffect(() => {
     validateAbi(abi);
@@ -110,6 +111,14 @@ export const AbiInput: React.FC<AbiInputProps> = ({
       setIsValid(true);
       setAbiObject(parsedAbi);
       setLinearizedAbi(linearizeAbi(parsedAbi));
+
+      // Generate and store the function signature
+      const functionName = (parsedAbi as any).name || 'anonymousFunction';
+      const inputParams = (parsedAbi as any).inputs
+        ? (parsedAbi as any).inputs.map((input: any) => `${input.type}${input.name ? ' ' + input.name : ''}`).join(', ')
+        : '';
+      setFunctionSignature(`${functionName}(${inputParams})`);
+
       return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Invalid ABI format');
@@ -223,10 +232,20 @@ export const AbiInput: React.FC<AbiInputProps> = ({
         </div>
       )}
 
-      {valuePreview && isFormValid && (
+      {isFormValid && (
         <div className={`abi-input__preview ${isFormValid ? 'abi-input__preview--valid' : 'abi-input__preview--invalid'} ${previewUpdated ? 'abi-input__preview--updated' : ''}`}>
-          <span className="abi-input__preview-label">Values:</span>
-          <code className="abi-input__preview-value">{valuePreview}</code>
+          <div className="abi-input__preview-content">
+            <div className="abi-input__preview-signature">
+              <span className="abi-input__preview-label">Signature:</span>
+              <code className="abi-input__preview-value">{functionSignature}</code>
+            </div>
+            {valuePreview && (
+              <div className="abi-input__preview-values">
+                <span className="abi-input__preview-label">Values:</span>
+                <code className="abi-input__preview-value">{valuePreview}</code>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

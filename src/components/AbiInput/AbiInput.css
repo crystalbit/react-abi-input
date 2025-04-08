@@ -241,10 +241,25 @@
   border-left: 3px solid #3498db;
   font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   overflow-x: auto;
   max-width: 100%;
   transition: background-color 0.3s ease;
+}
+
+.abi-input__preview-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 8px;
+}
+
+.abi-input__preview-signature,
+.abi-input__preview-values {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  overflow-x: auto;
 }
 
 @keyframes preview-update {
@@ -278,6 +293,7 @@
   color: #555;
   margin-right: 10px;
   white-space: nowrap;
+  min-width: 75px;
 }
 
 .abi-input__preview-value {
