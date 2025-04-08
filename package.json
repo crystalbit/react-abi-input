@@ -74,5 +74,8 @@
   ],
   "author": "",
   "license": "MIT",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "viem": "^2.26.0"
+  }
 }

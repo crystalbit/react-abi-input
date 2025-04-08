@@ -13,14 +13,16 @@ yarn add react-abi
 ## Usage
 
 ```tsx
-import { Button } from 'react-abi';
+import { AbiInput } from 'react-abi';
 
 function App() {
   return (
     <div>
-      <Button onClick={() => console.log('Button clicked!')}>
-        Click me
-      </Button>
+      <AbiInput 
+        count={3} 
+        placeholder="Field" 
+        onChange={(values) => console.log('Values:', values)}
+      />
     </div>
   );
 }
@@ -28,30 +30,28 @@ function App() {
 
 ## Components
 
-### Button
+### AbiInput
 
-A customizable button component.
+A component that renders multiple input fields based on a count parameter.
 
 ```tsx
-import { Button } from 'react-abi';
+import { AbiInput } from 'react-abi';
 
-<Button 
-  variant="primary" 
-  size="medium" 
-  onClick={() => console.log('Clicked!')}
->
-  Click me
-</Button>
+<AbiInput 
+  count={5} 
+  placeholder="Enter value" 
+  onChange={(values) => console.log('Input values:', values)}
+/>
 ```
 
 #### Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| variant | 'primary' \| 'secondary' \| 'outline' | 'primary' | Button style variant |
-| size | 'small' \| 'medium' \| 'large' | 'medium' | Button size |
-| disabled | boolean | false | Whether the button is disabled |
-| onClick | () => void | - | Click handler |
+| count | number | 1 | Number of input fields to display |
+| placeholder | string | 'Enter value' | Placeholder text for the inputs |
+| onChange | (values: string[]) => void | - | Callback function called when any input value changes |
+| className | string | '' | Additional CSS class names |
 
 ## Development
 
