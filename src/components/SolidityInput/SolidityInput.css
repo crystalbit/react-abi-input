@@ -1,0 +1,67 @@
+.solidity-input {
+  margin-bottom: 1rem;
+  font-family: sans-serif;
+}
+
+.solidity-input__label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.solidity-input__name {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.solidity-input__type {
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  font-family: monospace;
+  padding: 0.1rem 0.4rem;
+  background-color: #f5f5f5;
+  border-radius: 3px;
+}
+
+.solidity-input__field,
+.solidity-input__select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.solidity-input__field:focus,
+.solidity-input__select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.solidity-input--error .solidity-input__field,
+.solidity-input--error .solidity-input__select {
+  border-color: #e74c3c;
+}
+
+.solidity-input--error .solidity-input__field:focus,
+.solidity-input--error .solidity-input__select:focus {
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+}
+
+.solidity-input__error {
+  color: #e74c3c;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+/* Special styling for different types */
+.solidity-input[data-type="address"] .solidity-input__field {
+  font-family: monospace;
+}
+
+.solidity-input[data-type^="bytes"] .solidity-input__field {
+  font-family: monospace;
+}

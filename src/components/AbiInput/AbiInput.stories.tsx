@@ -32,9 +32,9 @@ export const Approve: Story = {
   },
 };
 
-export const DeployCode: Story = {
+export const Nested: Story = {
   args: {
-    abi: "function deployCode(string memory what, bytes memory args)",
+    abi: "function deployCode(string memory what, (uint256 a, (uint256 b, uint256 c)))",
   },
 };
 

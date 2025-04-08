@@ -1,38 +1,253 @@
 .abi-input {
-  position: relative;
-  width: 100%;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-family: sans-serif;
+}
+
+.abi-input__header {
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e1e4e8;
+  padding-bottom: 1rem;
+}
+
+.abi-input__function-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #24292e;
+  margin: 0;
+}
+
+.abi-input__parameters-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #24292e;
+  margin-top: 0;
   margin-bottom: 1rem;
 }
 
-.abi-input__field {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+.abi-input__parameters {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.abi-input__field:focus {
-  border-color: #86b7fe;
-  outline: 0;
-  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+.abi-input__parameter-wrapper {
+  position: relative;
 }
 
-.abi-input__field--error {
-  border-color: #dc3545;
+.abi-input__tuple-indicator {
+  position: absolute;
+  top: -0.5rem;
+  left: 0.5rem;
+  background-color: #0366d6;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  z-index: 1;
 }
 
-.abi-input__field--error:focus {
-  border-color: #dc3545;
-  box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+.abi-input__parameter {
+  margin-bottom: 0.5rem;
+}
+
+/* Make tuple types visually distinct */
+.abi-input__parameter--tuple {
+  background-color: rgba(241, 248, 255, 0.5) !important;
+  border-radius: 6px;
+  padding: 0.5rem;
+  border-left: 2px solid #0366d6 !important;
+}
+
+/* Parameter indentation based on depth */
+.abi-input__parameter--depth-0 {
+  margin-left: 0;
+}
+
+.abi-input__parameter--depth-1 {
+  margin-left: 1.5rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-2 {
+  margin-left: 3rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-3 {
+  margin-left: 4.5rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-4 {
+  margin-left: 6rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-5 {
+  margin-left: 7.5rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-6 {
+  margin-left: 9rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-7 {
+  margin-left: 10.5rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-8 {
+  margin-left: 12rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-9 {
+  margin-left: 13.5rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-10 {
+  margin-left: 15rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-11 {
+  margin-left: 16.5rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-12 {
+  margin-left: 18rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-13 {
+  margin-left: 19.5rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-14 {
+  margin-left: 21rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-15 {
+  margin-left: 22.5rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+.abi-input__parameter--depth-16 {
+  margin-left: 24rem;
+  border-left: 2px solid #e1e4e8;
+  padding-left: 1rem;
+}
+
+/* Colorize the border based on depth for better visual distinction */
+.abi-input__parameter--depth-1 {
+  border-left-color: rgba(3, 102, 214, 0.9);
+}
+
+.abi-input__parameter--depth-2 {
+  border-left-color: rgba(3, 102, 214, 0.8);
+}
+
+.abi-input__parameter--depth-3 {
+  border-left-color: rgba(3, 102, 214, 0.7);
+}
+
+.abi-input__parameter--depth-4 {
+  border-left-color: rgba(3, 102, 214, 0.6);
+}
+
+.abi-input__parameter--depth-5 {
+  border-left-color: rgba(3, 102, 214, 0.5);
+}
+
+.abi-input__parameter--depth-6 {
+  border-left-color: rgba(3, 102, 214, 0.8);
+}
+
+.abi-input__parameter--depth-7 {
+  border-left-color: rgba(3, 102, 214, 0.7);
+}
+
+.abi-input__parameter--depth-8 {
+  border-left-color: rgba(3, 102, 214, 0.6);
+}
+
+.abi-input__parameter--depth-9 {
+  border-left-color: rgba(3, 102, 214, 0.5);
+}
+
+.abi-input__parameter--depth-10 {
+  border-left-color: rgba(3, 102, 214, 0.4);
+}
+
+.abi-input__parameter--depth-11 {
+  border-left-color: rgba(3, 102, 214, 0.8);
+}
+
+.abi-input__parameter--depth-12 {
+  border-left-color: rgba(3, 102, 214, 0.7);
+}
+
+.abi-input__parameter--depth-13 {
+  border-left-color: rgba(3, 102, 214, 0.6);
+}
+
+.abi-input__parameter--depth-14 {
+  border-left-color: rgba(3, 102, 214, 0.5);
+}
+
+.abi-input__parameter--depth-15 {
+  border-left-color: rgba(3, 102, 214, 0.4);
+}
+
+.abi-input__parameter--depth-16 {
+  border-left-color: rgba(3, 102, 214, 0.3);
 }
 
 .abi-input__error {
-  display: block;
-  width: 100%;
-  margin-top: 0.25rem;
+  color: #cb2431;
   font-size: 0.875rem;
-  color: #dc3545;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background-color: #ffeef0;
+  border-radius: 4px;
+}
+
+/* Parameter type-specific styling */
+.abi-input__parameter--uint,
+.abi-input__parameter--int {
+  background-color: #f6f8fa;
+}
+
+.abi-input__parameter--address {
+  background-color: #f6f8fa;
+}
+
+.abi-input__parameter--bytes {
+  background-color: #f6f8fa;
 }
