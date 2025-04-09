@@ -17,18 +17,13 @@ export interface AbiInputProps {
   /**
    * Callback when the ABI value changes
    */
-  onChange?: (value: string, isValid: boolean) => void;
-  /**
-   * Callback when parameters are filled
-   */
-  onParamChange?: (params: Record<string, string>, isValid: boolean) => void;
+  onChange?: (values: Record<string, string>, bytecode: string) => void;
 }
 
 export const AbiInput: React.FC<AbiInputProps> = ({
   abi = 'function transfer(address to, uint256 amount)',
   className = '',
   onChange,
-  onParamChange,
   ...props
 }) => {
   const [isValid, setIsValid] = useState<boolean>(true);
@@ -41,6 +36,27 @@ export const AbiInput: React.FC<AbiInputProps> = ({
   const [previewUpdated, setPreviewUpdated] = useState<boolean>(false);
   const [functionSignature, setFunctionSignature] = useState<string>('');
   const [bytecode, setBytecode] = useState<string>('');
+
+  // Is the form fully valid (all inputs are valid)?
+  const isFormValid = useMemo(() => {
+    // First check if all fields are valid according to their individual validations
+    const allFieldsValid = Object.values(paramValidity).every(Boolean);
+
+    // If basic validation fails, no need to try bytecode generation
+    if (!allFieldsValid || !functionSignature || valuePreview.length === 0) {
+      return false;
+    }
+
+    // Try to generate bytecode as the ultimate validation
+    try {
+      // If we can generate bytecode, the form is valid
+      combineTx(functionSignature, valuePreview);
+      return true;
+    } catch (error) {
+      console.log('Form validation failed during bytecode generation:', error);
+      return false;
+    }
+  }, [paramValidity, functionSignature, valuePreview]);
 
   useEffect(() => {
     validateAbi(abi);
@@ -68,19 +84,58 @@ export const AbiInput: React.FC<AbiInputProps> = ({
     }
   }, [linearizedAbi]);
 
+  // Trigger animation when preview updates
   useEffect(() => {
-    if (linearizedAbi.length > 0 && onParamChange) {
-      const allValid = Object.values(paramValidity).every(valid => valid);
-      onParamChange(paramValues, allValid);
-    }
-
-    // Trigger animation when preview updates
     if (Object.keys(paramValues).length > 0) {
       setPreviewUpdated(true);
       const timer = setTimeout(() => setPreviewUpdated(false), 1000);
       return () => clearTimeout(timer);
     }
-  }, [paramValues, paramValidity, functionSignature, linearizedAbi, onParamChange]);
+  }, [paramValues]);
+
+  // Reset animation flag when done
+  useEffect(() => {
+    if (previewUpdated) {
+      setPreviewUpdated(false);
+    }
+  }, [previewUpdated]);
+
+  // If the ABI changes, we need to reset parameter values
+  useEffect(() => {
+    validateAbi(abi);
+  }, [abi]);
+
+  // Generate bytecode when form is valid and params change
+  useEffect(() => {
+    // Only try to generate bytecode if we have all the needed data
+    if (isFormValid && functionSignature && valuePreview) {
+      try {
+        const calldata = combineTx(functionSignature, valuePreview);
+        setBytecode(calldata);
+
+        // Call onChange with updated values and bytecode
+        if (onChange) {
+          onChange(paramValues, calldata);
+        }
+      } catch (error) {
+        // This should rarely happen since we already validated in isFormValid
+        console.error('Error generating bytecode:', error);
+        setBytecode('');
+
+        // Call onChange with empty bytecode on error
+        if (onChange) {
+          onChange(paramValues, '');
+        }
+      }
+    } else {
+      setBytecode('');
+
+      // Call onChange with empty bytecode when not ready
+      if (onChange) {
+        onChange(paramValues, '');
+      }
+    }
+  }, [isFormValid, functionSignature, valuePreview, paramValues, onChange]);
 
   const validateAbi = (abiString: string): boolean => {
     if (!abiString.trim()) {
@@ -438,68 +493,6 @@ export const AbiInput: React.FC<AbiInputProps> = ({
       return { type, name };
     }
   };
-
-  // Is the form fully valid (all inputs are valid)?
-  const isFormValid = useMemo(() => {
-    // First check if all fields are valid according to their individual validations
-    const allFieldsValid = Object.values(paramValidity).every(Boolean);
-
-    // If basic validation fails, no need to try bytecode generation
-    if (!allFieldsValid || !functionSignature || valuePreview.length === 0) {
-      return false;
-    }
-
-    // Try to generate bytecode as the ultimate validation
-    try {
-      // If we can generate bytecode, the form is valid
-      combineTx(functionSignature, valuePreview);
-      return true;
-    } catch (error) {
-      console.log('Form validation failed during bytecode generation:', error);
-      return false;
-    }
-  }, [paramValidity, functionSignature, valuePreview]);
-
-  // Update parameters when form validity changes
-  useEffect(() => {
-    if (onParamChange) {
-      onParamChange(paramValues, isFormValid);
-    }
-  }, [isFormValid, paramValues, onParamChange]);
-
-  // Update preview when values change
-  useEffect(() => {
-    // Preview is now updated directly in handleParamChange
-  }, [paramValues]);
-
-  // Update value preview and bytecode when parameters change
-  useEffect(() => {
-    if (previewUpdated) {
-      setPreviewUpdated(false);
-    }
-  }, [previewUpdated]);
-
-  // If the ABI changes, we need to reset parameter values
-  useEffect(() => {
-    validateAbi(abi);
-  }, [abi]);
-
-  // Generate bytecode when form is valid and params change
-  useEffect(() => {
-    // Only try to generate bytecode if we have all the needed data
-    if (isFormValid && functionSignature && valuePreview) {
-      try {
-        const calldata = combineTx(functionSignature, valuePreview);
-        setBytecode(calldata);
-      } catch (error) {
-        // This should rarely happen since we already validated in isFormValid
-        console.error('Error generating bytecode:', error);
-        setBytecode('');
-      }
-    } else {
-      setBytecode('');
-    }
-  }, [isFormValid, functionSignature, valuePreview]);
 
   return (
     <div className={`abi-input ${className}`} {...props}>
