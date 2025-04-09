@@ -85,6 +85,118 @@
   font-style: italic;
 }
 
+.solidity-input__tuple-error {
+  padding: 0.5rem;
+  border: 1px dashed #e74c3c;
+  border-radius: 4px;
+  color: #e74c3c;
+  font-size: 0.9rem;
+  text-align: center;
+  background-color: rgba(231, 76, 60, 0.05);
+  font-style: italic;
+}
+
+.solidity-input__tuple-content,
+.solidity-input__tuple-item-content {
+  width: 100%;
+}
+
+.solidity-input__tuple-item-content {
+  flex: 1;
+  margin-left: 0.5rem;
+}
+
+.solidity-input__tuple-fields {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #eaecef;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+}
+
+.solidity-input__tuple-field {
+  margin-bottom: 0.5rem;
+}
+
+.solidity-input__tuple-field:last-child {
+  margin-bottom: 0;
+}
+
+.solidity-input__tuple-field-label {
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+  color: #586069;
+  font-weight: 600;
+}
+
+.solidity-input__tuple-field-type {
+  font-family: monospace;
+  color: #7f8c8d;
+  font-size: 0.75rem;
+  font-weight: normal;
+}
+
+.solidity-input__tuple-field-input,
+.solidity-input__tuple-field-select {
+  width: 100%;
+  padding: 0.35rem;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.solidity-input__tuple-field-input:focus,
+.solidity-input__tuple-field-select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.solidity-input__tuple-field-input--error {
+  border-color: #e74c3c;
+  background-color: rgba(231, 76, 60, 0.05);
+}
+
+.solidity-input__tuple-field-input--error:focus {
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+}
+
+.solidity-input__field-error {
+  color: #e74c3c;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+.solidity-input__nested-tuple {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  border: 1px solid #eaecef;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+}
+
+.solidity-input__complex-tuple {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Add better styling for complex tuple types */
+.solidity-input--complex-tuple {
+  background-color: rgba(241, 248, 255, 0.5);
+  border-radius: 6px;
+  padding: 0.75rem;
+  border-left: 3px solid #0366d6;
+}
+
+.solidity-input--complex-tuple.solidity-input--error {
+  background-color: rgba(231, 76, 60, 0.05);
+  border-left: 3px solid #e74c3c;
+}
+
 /* Array styling */
 .solidity-input--array {
   background-color: rgba(241, 248, 255, 0.3);
@@ -236,4 +348,28 @@
   display: flex;
   align-items: center;
   flex: 1;
+}
+
+.solidity-input__field--error {
+  border-color: #e74c3c;
+  background-color: rgba(231, 76, 60, 0.05);
+}
+
+.solidity-input__field--error:focus {
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+}
+
+/* Address actions for complex tuple arrays */
+.solidity-input__address-actions {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  gap: 0.5rem;
+}
+
+.solidity-input__address-actions .solidity-input__zero-address-button {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
+  flex: 0 0 auto;
 }

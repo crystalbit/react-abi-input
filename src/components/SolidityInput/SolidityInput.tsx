@@ -1,6 +1,137 @@
 import React, { useState, useEffect } from 'react';
 import './SolidityInput.css';
 
+// Helper function to parse complex tuple types
+interface ParsedTupleField {
+  type: string;
+  name: string;
+  isComplex: boolean;
+  components?: ParsedTupleField[];
+}
+
+/**
+ * Parses a complex tuple type format like "(uint256 a, (uint256 b, uint256 c) param1)"
+ * and extracts the component structure to use with SolidityInput
+ */
+const parseTupleType = (typeStr: string): { fields: ParsedTupleField[], isArray: boolean } => {
+  // Check if this is an array type
+  const isArray = typeStr.includes('[]');
+  // Remove array notation for processing
+  const baseType = isArray ? typeStr.replace(/\[\d*\]$/, '') : typeStr;
+
+  // Only process if it's a tuple format (starts with '(')
+  if (!baseType.startsWith('(') || !baseType.endsWith(')')) {
+    return { fields: [], isArray };
+  }
+
+  // Extract the content between parentheses
+  const content = baseType.substring(1, baseType.length - 1);
+  const fields: ParsedTupleField[] = [];
+
+  // Parse the fields with awareness of nested tuples
+  let currentPos = 0;
+  let parenDepth = 0;
+  let currentField = '';
+
+  while (currentPos < content.length) {
+    const char = content[currentPos];
+
+    if (char === '(' && parenDepth === 0) {
+      // Start of a nested tuple
+      parenDepth++;
+      currentField += char;
+    } else if (char === '(' && parenDepth > 0) {
+      // Nested parenthesis inside already nested tuple
+      parenDepth++;
+      currentField += char;
+    } else if (char === ')' && parenDepth > 0) {
+      // End of a nested tuple
+      parenDepth--;
+      currentField += char;
+    } else if (char === ',' && parenDepth === 0) {
+      // End of current field
+      if (currentField.trim()) {
+        const parsedField = parseField(currentField.trim());
+        if (parsedField) {
+          fields.push(parsedField);
+        }
+      }
+      currentField = '';
+    } else {
+      // Part of current field
+      currentField += char;
+    }
+
+    currentPos++;
+  }
+
+  // Add the last field
+  if (currentField.trim()) {
+    const parsedField = parseField(currentField.trim());
+    if (parsedField) {
+      fields.push(parsedField);
+    }
+  }
+
+  return { fields, isArray };
+};
+
+/**
+ * Parse a single field from a tuple type description
+ * Examples: "uint256 a", "(uint256 b, uint256 c) param1"
+ */
+const parseField = (field: string): ParsedTupleField | null => {
+  if (!field) return null;
+
+  // Check if it's a nested tuple
+  if (field.startsWith('(')) {
+    // Find the closing parenthesis index
+    let parenDepth = 0;
+    let closingIndex = -1;
+
+    for (let i = 0; i < field.length; i++) {
+      if (field[i] === '(') parenDepth++;
+      if (field[i] === ')') parenDepth--;
+
+      if (parenDepth === 0 && field[i] === ')') {
+        closingIndex = i;
+        break;
+      }
+    }
+
+    if (closingIndex === -1) return null;
+
+    // Extract the nested tuple part and the field name
+    const tupleType = field.substring(0, closingIndex + 1);
+    const nameMatch = field.substring(closingIndex + 1).trim().match(/^([a-zA-Z0-9_]+)$/);
+    const name = nameMatch ? nameMatch[1] : `param${Math.floor(Math.random() * 1000)}`;
+
+    // Recursively parse the nested tuple
+    const { fields } = parseTupleType(tupleType);
+
+    return {
+      type: tupleType,
+      name,
+      isComplex: true,
+      components: fields
+    };
+  } else {
+    // Regular field: "type name"
+    const parts = field.split(' ');
+
+    if (parts.length < 2) return null;
+
+    const type = parts[0];
+    const name = parts[1];
+
+    return {
+      type,
+      name,
+      isComplex: false
+    };
+  }
+};
+
 export interface SolidityInputProps {
   /**
    * The Solidity type of the input (uint256, address, bool, etc.)
@@ -22,6 +153,21 @@ export interface SolidityInputProps {
    * Additional CSS class name
    */
   className?: string;
+  /**
+   * Tuple components for tuple types
+   */
+  tupleComponents?: React.ReactNode[];
+  /**
+   * Tuple component renderer function for each array item
+   */
+  renderTupleItem?: (index: number, value: string) => React.ReactNode;
+  /**
+   * Tuple component definitions
+   */
+  tupleStructure?: {
+    name: string;
+    type: string;
+  }[];
 }
 
 export const SolidityInput: React.FC<SolidityInputProps> = ({
@@ -30,6 +176,9 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
   value = '',
   onChange,
   className = '',
+  tupleComponents,
+  renderTupleItem,
+  tupleStructure,
   ...props
 }) => {
   const [isValid, setIsValid] = useState<boolean>(true);
@@ -38,9 +187,29 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
   const [isArray, setIsArray] = useState<boolean>(false);
   const [arrayItems, setArrayItems] = useState<{ value: string; isValid: boolean }[]>([]);
   const [baseType, setBaseType] = useState<string>('');
+  const [parsedTupleFields, setParsedTupleFields] = useState<ParsedTupleField[]>([]);
 
   useEffect(() => {
-    // Determine if type is array and get base type
+    // Check if this is a complex tuple type
+    const isComplexTuple = type.startsWith('(') && type.includes(')');
+
+    // For complex tuple types, parse the structure from the type string
+    if (isComplexTuple) {
+      const { fields, isArray: isTupleArray } = parseTupleType(type);
+      setParsedTupleFields(fields);
+
+      setIsTuple(true);
+      setIsArray(isTupleArray);
+      setBaseType(isTupleArray ? type.replace(/\[\d*\]$/, '') : type);
+
+      // Complex tuples are always considered valid during initialization
+      setIsValid(true);
+      setError('');
+
+      return;
+    }
+
+    // Handle regular types (existing code)
     const isArrayType = type.includes('[');
     setIsArray(isArrayType);
 
@@ -51,6 +220,15 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
     // Check if base type is tuple
     const isTupleType = extractedBaseType === 'tuple';
     setIsTuple(isTupleType);
+
+    // For tuple types, we need specific renderers
+    if (isTupleType && isArrayType && !tupleStructure && !renderTupleItem) {
+      console.warn(`SolidityInput: tupleStructure or renderTupleItem prop is required for tuple arrays (${name})`);
+    }
+
+    if (isTupleType && !isArrayType && !tupleStructure && !tupleComponents) {
+      console.warn(`SolidityInput: tupleStructure or tupleComponents prop is required for tuples (${name})`);
+    }
 
     // For tuple types or arrays, handle validation differently
     if (isTupleType) {
@@ -69,7 +247,8 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
           if (Array.isArray(parsedValue)) {
             items = parsedValue.map(item => ({
               value: String(item),
-              isValid: validateSingleValue(String(item), extractedBaseType)
+              // For tuples, always consider valid since they're managed by nested components
+              isValid: isTupleType ? true : validateSingleValue(String(item), extractedBaseType)
             }));
           }
         }
@@ -114,7 +293,9 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
           if (Array.isArray(parsedValue)) {
             setArrayItems(parsedValue.map(item => ({
               value: String(item),
-              isValid: validateSingleValue(String(item), baseType)
+              // Always consider tuple items valid since they're managed by nested components
+              // Both traditional 'tuple' type and the new complex tuple format with parentheses
+              isValid: baseType === 'tuple' || baseType.startsWith('(') ? true : validateSingleValue(String(item), baseType)
             })));
           }
         } else {
@@ -132,7 +313,7 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
     } else if (!isTuple) {
       validateInput(value);
     }
-  }, [value, isArray]);
+  }, [value, isArray, baseType]);
 
   // Update parent when array items change
   useEffect(() => {
@@ -148,6 +329,12 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
 
   // Function to validate single array item
   const validateSingleValue = (itemValue: string, itemType: string): boolean => {
+    // Skip validation for tuple types - tuples are always considered valid
+    // as they are handled by nested components
+    if (itemType === 'tuple') {
+      return true;
+    }
+
     if (!itemValue.trim() && itemValue !== 'false') {
       return false;
     }
@@ -328,6 +515,39 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
     setArrayItems(newItems);
   };
 
+  // Function to set an address field to zero in a complex tuple structure
+  const setComplexTupleAddressToZero = (fieldName: string) => {
+    try {
+      const tupleObj = JSON.parse(value || '{}');
+      const zeroAddress = '0x0000000000000000000000000000000000000000';
+
+      // Create the updated tuple value
+      const newTupleValue = JSON.stringify({
+        ...tupleObj,
+        [fieldName]: zeroAddress
+      });
+
+      // The zero address is always valid for address fields
+      setIsValid(true);
+      setError('');
+
+      // Pass the updated value back to parent with valid=true
+      onChange(newTupleValue, true);
+    } catch (e: unknown) {
+      // If parsing fails, create a new object with just this field set to zero
+      const zeroAddress = '0x0000000000000000000000000000000000000000';
+      const newTupleValue = JSON.stringify({
+        [fieldName]: zeroAddress
+      });
+
+      // Zero address is always valid
+      setIsValid(true);
+      setError('');
+
+      onChange(newTupleValue, true);
+    }
+  };
+
   const getInputType = () => {
     if (baseType.startsWith('uint') || baseType.startsWith('int')) {
       return 'number';
@@ -352,7 +572,8 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
 
   const handleArrayItemChange = (index: number, newValue: string) => {
     const newItems = [...arrayItems];
-    const isItemValid = validateSingleValue(newValue, baseType);
+    // For tuple types, always consider valid as they're managed by nested components
+    const isItemValid = baseType === 'tuple' ? true : validateSingleValue(newValue, baseType);
     newItems[index] = { value: newValue, isValid: isItemValid };
     setArrayItems(newItems);
   };
@@ -361,7 +582,37 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
     let defaultValue = '';
 
     // Set sensible default values based on type
-    if (baseType.startsWith('uint')) {
+    if (baseType === 'tuple') {
+      // For tuple types, create an object with default values for each field in the tuple structure
+      if (tupleStructure) {
+        const defaultTupleValues: Record<string, string> = {};
+        tupleStructure.forEach(field => {
+          // Set appropriate default values based on field type
+          if (field.type.startsWith('uint') || field.type.startsWith('int')) {
+            defaultTupleValues[field.name] = '0';
+          } else if (field.type === 'bool') {
+            defaultTupleValues[field.name] = 'false';
+          } else if (field.type === 'address') {
+            defaultTupleValues[field.name] = '0x0000000000000000000000000000000000000000';
+          } else if (field.type === 'string') {
+            defaultTupleValues[field.name] = '';
+          } else if (field.type.startsWith('bytes')) {
+            if (/^bytes(\d+)$/.test(field.type)) {
+              const size = parseInt(field.type.replace('bytes', ''));
+              defaultTupleValues[field.name] = '0x' + '0'.repeat(size * 2);
+            } else {
+              defaultTupleValues[field.name] = '0x';
+            }
+          } else {
+            defaultTupleValues[field.name] = '';
+          }
+        });
+        defaultValue = JSON.stringify(defaultTupleValues);
+      } else {
+        // If no tuple structure is provided, use an empty object
+        defaultValue = JSON.stringify({});
+      }
+    } else if (baseType.startsWith('uint')) {
       defaultValue = '0';
     } else if (baseType.startsWith('int')) {
       defaultValue = '0';
@@ -388,16 +639,329 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
     setArrayItems(newItems);
   };
 
-  // For tuple types, we don't show an input field as values come from nested components
+  // For complex tuple types, render nested solidity inputs based on parsed structure
+  const renderComplexTuple = () => {
+    if (parsedTupleFields.length === 0) return null;
+
+    return (
+      <div className="solidity-input__complex-tuple">
+        {parsedTupleFields.map((field, index) => {
+          // Try to parse the tuple value as JSON
+          let fieldValue = '';
+          try {
+            const tupleObj = JSON.parse(value || '{}');
+            fieldValue = tupleObj[field.name] || '';
+          } catch (e: unknown) {
+            // If parsing fails, just use an empty string
+          }
+
+          // If it's a nested tuple field
+          if (field.isComplex && field.components) {
+            return (
+              <div key={index} className="solidity-input__nested-tuple">
+                <label className="solidity-input__tuple-field-label">
+                  {field.name}:
+                </label>
+                <SolidityInput
+                  type={field.type}
+                  name={field.name}
+                  value={fieldValue}
+                  onChange={(newValue, isFieldValid) => {
+                    try {
+                      const tupleObj = JSON.parse(value || '{}');
+                      const newTupleValue = JSON.stringify({
+                        ...tupleObj,
+                        [field.name]: newValue
+                      });
+
+                      // Update validity state of the parent component based on child validity
+                      if (!isFieldValid) {
+                        setIsValid(false);
+                        setError(`Invalid value in nested field "${field.name}"`);
+                      } else {
+                        // Check other fields before setting parent as valid
+                        // This ensures we don't overwrite other field errors
+                        const otherFieldsValid = Object.keys(tupleObj)
+                          .filter(key => key !== field.name)
+                          .every(key => {
+                            const fieldDef = parsedTupleFields.find(f => f.name === key);
+                            // Skip complex validation here as it's handled by the child components
+                            if (fieldDef?.isComplex) return true;
+                            // For simple fields, validate the value if we have a definition
+                            return fieldDef ? validateSingleValue(tupleObj[key], fieldDef.type) : true;
+                          });
+
+                        if (otherFieldsValid) {
+                          setIsValid(true);
+                          setError('');
+                        }
+                      }
+
+                      onChange(newTupleValue, isFieldValid);
+                    } catch (e: unknown) {
+                      // If parsing fails, create a new object with just this field
+                      const newTupleValue = JSON.stringify({
+                        [field.name]: newValue
+                      });
+
+                      // Also update validity state 
+                      if (!isFieldValid) {
+                        setIsValid(false);
+                        setError(`Invalid value in nested field "${field.name}"`);
+                      } else {
+                        setIsValid(true);
+                        setError('');
+                      }
+
+                      onChange(newTupleValue, isFieldValid);
+                    }
+                  }}
+                  className="solidity-input__nested"
+                />
+              </div>
+            );
+          }
+
+          // For simple fields within the complex tuple
+          return (
+            <div key={index} className="solidity-input__tuple-field">
+              <label className="solidity-input__tuple-field-label">
+                {field.name}: <span className="solidity-input__tuple-field-type">{field.type}</span>
+              </label>
+              {field.type === 'bool' ? (
+                <select
+                  value={fieldValue}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    try {
+                      const tupleObj = JSON.parse(value || '{}');
+                      const newTupleValue = JSON.stringify({
+                        ...tupleObj,
+                        [field.name]: newValue
+                      });
+
+                      // Boolean values are always valid
+                      setIsValid(true);
+                      setError('');
+
+                      onChange(newTupleValue, true);
+                    } catch (e: unknown) {
+                      // If parsing fails, create a new object with just this field
+                      const newTupleValue = JSON.stringify({
+                        [field.name]: newValue
+                      });
+                      onChange(newTupleValue, true);
+                    }
+                  }}
+                  className="solidity-input__tuple-field-select"
+                >
+                  <option value="true">true</option>
+                  <option value="false">false</option>
+                </select>
+              ) : (
+                <div className="solidity-input__field-container">
+                  <input
+                    type={field.type.startsWith('uint') || field.type.startsWith('int') ? 'number' : 'text'}
+                    value={fieldValue}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      try {
+                        const tupleObj = JSON.parse(value || '{}');
+
+                        // Validate the new value
+                        const isFieldValid = validateSingleValue(newValue, field.type);
+
+                        // Update the parent component's validity state
+                        if (!isFieldValid) {
+                          setIsValid(false);
+                          setError(`Invalid value for field "${field.name}" (${field.type})`);
+                        } else {
+                          // Check all other fields before setting the parent as valid
+                          const otherFieldsValid = Object.keys(tupleObj)
+                            .filter(key => key !== field.name)
+                            .every(key => {
+                              const fieldDef = parsedTupleFields.find(f => f.name === key);
+                              // Skip complex validation here as it's handled by the child components
+                              if (fieldDef?.isComplex) return true;
+                              // For simple fields, validate the value if we have a definition
+                              return fieldDef ? validateSingleValue(tupleObj[key], fieldDef.type) : true;
+                            });
+
+                          if (otherFieldsValid) {
+                            setIsValid(true);
+                            setError('');
+                          }
+                        }
+
+                        const newTupleValue = JSON.stringify({
+                          ...tupleObj,
+                          [field.name]: newValue
+                        });
+                        onChange(newTupleValue, isFieldValid);
+                      } catch (e: unknown) {
+                        // If parsing fails, create a new object with just this field
+                        const isFieldValid = validateSingleValue(newValue, field.type);
+
+                        if (!isFieldValid) {
+                          setIsValid(false);
+                          setError(`Invalid value for field "${field.name}" (${field.type})`);
+                        } else {
+                          setIsValid(true);
+                          setError('');
+                        }
+
+                        const newTupleValue = JSON.stringify({
+                          [field.name]: newValue
+                        });
+                        onChange(newTupleValue, isFieldValid);
+                      }
+                    }}
+                    className={`solidity-input__tuple-field-input ${!validateSingleValue(fieldValue, field.type) ? 'solidity-input__tuple-field-input--error' : ''}`}
+                    placeholder={`Enter ${field.type} value...`}
+                  />
+                  {field.type === 'address' && (
+                    <button
+                      type="button"
+                      onClick={() => setComplexTupleAddressToZero(field.name)}
+                      className="solidity-input__zero-address-button"
+                      title="Set to zero address"
+                    >
+                      0x0
+                    </button>
+                  )}
+                </div>
+              )}
+              {!validateSingleValue(fieldValue, field.type) && (
+                <div className="solidity-input__field-error">
+                  Invalid {field.type}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Update the tuple rendering to handle complex tuples
   if (isTuple && !isArray) {
+    // For complex tuple types (with the new format)
+    if (parsedTupleFields.length > 0) {
+      return (
+        <div className={`solidity-input ${className} solidity-input--tuple solidity-input--complex-tuple ${!isValid ? 'solidity-input--error' : ''}`}>
+          <div className="solidity-input__label">
+            <span className="solidity-input__name">{name}</span>
+            <span className="solidity-input__type">{type}</span>
+          </div>
+          <div className="solidity-input__tuple-content">
+            {renderComplexTuple()}
+          </div>
+          {!isValid && error && (
+            <div className="solidity-input__error">{error}</div>
+          )}
+        </div>
+      );
+    }
+
+    // For traditional tuple types (existing code)
     return (
       <div className={`solidity-input ${className} solidity-input--tuple`}>
         <div className="solidity-input__label">
           <span className="solidity-input__name">{name}</span>
           <span className="solidity-input__type">{type}</span>
         </div>
-        <div className="solidity-input__tuple-placeholder">
-          Tuple
+        <div className="solidity-input__tuple-content">
+          {tupleComponents || (
+            tupleStructure ? (
+              <div className="solidity-input__tuple-fields">
+                {tupleStructure.map((field, fieldIndex) => {
+                  // Try to parse the tuple value as JSON
+                  let fieldValue = '';
+                  try {
+                    const tupleObj = JSON.parse(value || '{}');
+                    fieldValue = tupleObj[field.name] || '';
+                  } catch (e: unknown) {
+                    // If parsing fails, just use an empty string
+                  }
+
+                  // Create an input for each field in the tuple
+                  return (
+                    <div key={fieldIndex} className="solidity-input__tuple-field">
+                      <label className="solidity-input__tuple-field-label">
+                        {field.name}: <span className="solidity-input__tuple-field-type">{field.type}</span>
+                      </label>
+                      {field.type === 'bool' ? (
+                        <select
+                          value={fieldValue}
+                          onChange={(e) => {
+                            const newValue = e.target.value;
+                            try {
+                              const tupleObj = JSON.parse(value || '{}');
+                              const newTupleValue = JSON.stringify({
+                                ...tupleObj,
+                                [field.name]: newValue
+                              });
+                              onChange(newTupleValue, true);
+                            } catch (e: unknown) {
+                              // If parsing fails, create a new object with just this field
+                              const newTupleValue = JSON.stringify({
+                                [field.name]: newValue
+                              });
+                              onChange(newTupleValue, true);
+                            }
+                          }}
+                          className="solidity-input__tuple-field-select"
+                        >
+                          <option value="true">true</option>
+                          <option value="false">false</option>
+                        </select>
+                      ) : (
+                        <div className="solidity-input__field-container">
+                          <input
+                            type={field.type.startsWith('uint') || field.type.startsWith('int') ? 'number' : 'text'}
+                            value={fieldValue}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              try {
+                                const tupleObj = JSON.parse(value || '{}');
+                                const newTupleValue = JSON.stringify({
+                                  ...tupleObj,
+                                  [field.name]: newValue
+                                });
+                                onChange(newTupleValue, true);
+                              } catch (e: unknown) {
+                                // If parsing fails, create a new object with just this field
+                                const newTupleValue = JSON.stringify({
+                                  [field.name]: newValue
+                                });
+                                onChange(newTupleValue, true);
+                              }
+                            }}
+                            className="solidity-input__tuple-field-input"
+                            placeholder={`Enter ${field.type} value...`}
+                          />
+                          {field.type === 'address' && (
+                            <button
+                              type="button"
+                              onClick={() => setComplexTupleAddressToZero(field.name)}
+                              className="solidity-input__zero-address-button"
+                              title="Set to zero address"
+                            >
+                              0x0
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="solidity-input__tuple-error">
+                Tuple structure undefined
+              </div>
+            )
+          )}
         </div>
       </div>
     );
@@ -405,8 +969,11 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
 
   // For array types, including arrays of tuples
   if (isArray) {
+    // Special handling for complex tuple arrays
+    const isComplexTupleArray = baseType.startsWith('(') && baseType.includes(')');
+
     return (
-      <div className={`solidity-input ${className} solidity-input--array ${isTuple ? 'solidity-input--tuple-array' : ''}`}>
+      <div className={`solidity-input ${className} solidity-input--array ${isTuple || isComplexTupleArray ? 'solidity-input--tuple-array' : ''} ${!isValid ? 'solidity-input--error' : ''}`}>
         <div className="solidity-input__label">
           <span className="solidity-input__name">{name}</span>
           <span className="solidity-input__type">{type}</span>
@@ -418,13 +985,259 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
               Empty array
             </div>
           ) : (
+            // Only render array items if there are any
             arrayItems.map((item, index) => (
               <div key={index} className={`solidity-input__array-item ${!item.isValid ? 'solidity-input__array-item--error' : ''}`}>
-                {isTuple ? (
+                {/* For complex tuple array types with the new format */}
+                {isComplexTupleArray ? (
                   <div className="solidity-input__tuple-array-item">
                     <span className="solidity-input__array-index">{index}:</span>
-                    <div className="solidity-input__tuple-placeholder">
-                      Tuple
+                    <div className="solidity-input__tuple-item-content">
+                      <SolidityInput
+                        type={baseType}
+                        name={`${name}[${index}]`}
+                        value={item.value}
+                        onChange={(newValue, isFieldValid) => {
+                          handleArrayItemChange(index, newValue);
+
+                          // Update validity state of array items
+                          const newItems = [...arrayItems];
+                          newItems[index] = {
+                            value: newValue,
+                            isValid: isFieldValid
+                          };
+                          setArrayItems(newItems);
+
+                          // Check if all items are valid
+                          const allValid = newItems.every(i => i.isValid);
+                          setIsValid(allValid);
+                          if (!allValid) {
+                            setError(`One or more array items are invalid`);
+                          } else {
+                            setError('');
+                          }
+
+                          // Propagate validity state to parent
+                          onChange(
+                            JSON.stringify(newItems.map(i => i.value)),
+                            allValid
+                          );
+                        }}
+                        className="solidity-input__nested"
+                        // Pass the tuple structure to the nested component based on the parsed fields
+                        tupleStructure={parsedTupleFields.map(field => ({
+                          name: field.name,
+                          type: field.type
+                        }))}
+                      />
+                    </div>
+                  </div>
+                ) : isTuple ? (
+                  <div className="solidity-input__tuple-array-item">
+                    <span className="solidity-input__array-index">{index}:</span>
+                    <div className="solidity-input__tuple-item-content">
+                      {renderTupleItem ?
+                        renderTupleItem(index, item.value) :
+                        tupleStructure ? (
+                          <div className="solidity-input__tuple-fields">
+                            {tupleStructure.map((field, fieldIndex) => {
+                              // Try to parse the tuple value as JSON
+                              let fieldValue = '';
+                              try {
+                                const tupleObj = JSON.parse(item.value);
+                                fieldValue = tupleObj[field.name] || '';
+                              } catch (e: unknown) {
+                                // If parsing fails, just use an empty string
+                              }
+
+                              // Create an input for each field in the tuple
+                              return (
+                                <div key={fieldIndex} className="solidity-input__tuple-field">
+                                  <label className="solidity-input__tuple-field-label">
+                                    {field.name}: <span className="solidity-input__tuple-field-type">{field.type}</span>
+                                  </label>
+                                  {field.type === 'bool' ? (
+                                    <select
+                                      value={fieldValue}
+                                      onChange={(e) => {
+                                        const newValue = e.target.value;
+                                        try {
+                                          const tupleObj = JSON.parse(item.value);
+
+                                          // Validate the field value first
+                                          const isFieldValid = validateSingleValue(newValue, field.type);
+
+                                          const newTupleValue = JSON.stringify({
+                                            ...tupleObj,
+                                            [field.name]: newValue
+                                          });
+
+                                          // Check if all fields in the tuple are valid
+                                          const allFieldsValid = Object.keys({ ...tupleObj, [field.name]: newValue })
+                                            .every(key => {
+                                              const fieldDef = tupleStructure?.find(f => f.name === key);
+                                              if (!fieldDef) return true; // Skip fields without definition
+                                              // Special case for the current field
+                                              if (key === field.name) return isFieldValid;
+                                              // For other fields, validate their values
+                                              return validateSingleValue(tupleObj[key], fieldDef.type);
+                                            });
+
+                                          // Update array item with new value and validity state
+                                          handleArrayItemChange(index, newTupleValue);
+
+                                          // Also update the overall validation state
+                                          const newItems = [...arrayItems];
+                                          newItems[index] = {
+                                            value: newTupleValue,
+                                            isValid: allFieldsValid
+                                          };
+                                          setArrayItems(newItems);
+
+                                          // Check if all array items are valid
+                                          const allValid = newItems.every(i => i.isValid);
+                                          setIsValid(allValid);
+                                          onChange(JSON.stringify(newItems.map(i => i.value)), allValid);
+                                        } catch (e: unknown) {
+                                          // If parsing fails, create a new object with just this field
+                                          const isFieldValid = validateSingleValue(newValue, field.type);
+                                          const newTupleValue = JSON.stringify({
+                                            [field.name]: newValue
+                                          });
+
+                                          // Mark as invalid since we couldn't validate the whole tuple
+                                          const newItems = [...arrayItems];
+                                          newItems[index] = {
+                                            value: newTupleValue,
+                                            isValid: isFieldValid // At least check this field
+                                          };
+                                          setArrayItems(newItems);
+
+                                          // Update validity state
+                                          const allValid = newItems.every(i => i.isValid);
+                                          setIsValid(allValid);
+
+                                          handleArrayItemChange(index, newTupleValue);
+                                          onChange(JSON.stringify(newItems.map(i => i.value)), allValid);
+                                        }
+                                      }}
+                                      className="solidity-input__tuple-field-select"
+                                    >
+                                      <option value="true">true</option>
+                                      <option value="false">false</option>
+                                    </select>
+                                  ) : (
+                                    <div className="solidity-input__field-container">
+                                      <input
+                                        type={field.type.startsWith('uint') || field.type.startsWith('int') ? 'number' : 'text'}
+                                        value={fieldValue}
+                                        onChange={(e) => {
+                                          const newValue = e.target.value;
+                                          try {
+                                            const tupleObj = JSON.parse(item.value);
+
+                                            // Validate the field value first
+                                            const isFieldValid = validateSingleValue(newValue, field.type);
+
+                                            const newTupleValue = JSON.stringify({
+                                              ...tupleObj,
+                                              [field.name]: newValue
+                                            });
+
+                                            // Check if all fields in the tuple are valid
+                                            const allFieldsValid = Object.keys({ ...tupleObj, [field.name]: newValue })
+                                              .every(key => {
+                                                const fieldDef = tupleStructure?.find(f => f.name === key);
+                                                if (!fieldDef) return true; // Skip fields without definition
+                                                // Special case for the current field
+                                                if (key === field.name) return isFieldValid;
+                                                // For other fields, validate their values
+                                                return validateSingleValue(tupleObj[key], fieldDef.type);
+                                              });
+
+                                            // Update array item with new value and validity state
+                                            handleArrayItemChange(index, newTupleValue);
+
+                                            // Also update the overall validation state
+                                            const newItems = [...arrayItems];
+                                            newItems[index] = {
+                                              value: newTupleValue,
+                                              isValid: allFieldsValid
+                                            };
+                                            setArrayItems(newItems);
+
+                                            // Check if all array items are valid
+                                            const allValid = newItems.every(i => i.isValid);
+                                            setIsValid(allValid);
+                                            onChange(JSON.stringify(newItems.map(i => i.value)), allValid);
+                                          } catch (e: unknown) {
+                                            // If parsing fails, create a new object with just this field
+                                            const isFieldValid = validateSingleValue(newValue, field.type);
+                                            const newTupleValue = JSON.stringify({
+                                              [field.name]: newValue
+                                            });
+
+                                            // Mark as invalid since we couldn't validate the whole tuple
+                                            const newItems = [...arrayItems];
+                                            newItems[index] = {
+                                              value: newTupleValue,
+                                              isValid: isFieldValid // At least check this field
+                                            };
+                                            setArrayItems(newItems);
+
+                                            // Update validity state
+                                            const allValid = newItems.every(i => i.isValid);
+                                            setIsValid(allValid);
+
+                                            handleArrayItemChange(index, newTupleValue);
+                                            onChange(JSON.stringify(newItems.map(i => i.value)), allValid);
+                                          }
+                                        }}
+                                        className="solidity-input__tuple-field-input"
+                                        placeholder={`Enter ${field.type} value...`}
+                                      />
+                                      {field.type === 'address' && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const zeroAddress = '0x0000000000000000000000000000000000000000';
+                                            // For simple address arrays, we don't need to parse JSON objects
+                                            // Just set the zero address directly
+                                            const newItems = [...arrayItems];
+
+                                            // Always consider zero address valid
+                                            newItems[index] = {
+                                              value: zeroAddress,
+                                              isValid: true
+                                            };
+
+                                            // Update array items and component state
+                                            setArrayItems(newItems);
+                                            setIsValid(true);
+                                            setError('');
+
+                                            // Update parent
+                                            handleArrayItemChange(index, zeroAddress);
+                                            onChange(JSON.stringify(newItems.map(i => i.value)), true);
+                                          }}
+                                          className="solidity-input__zero-address-button"
+                                          title="Set to zero address"
+                                        >
+                                          0x0
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="solidity-input__tuple-error">
+                            Tuple structure undefined
+                          </div>
+                        )
+                      }
                     </div>
                   </div>
                 ) : baseType === 'bool' ? (
@@ -442,23 +1255,45 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
                 ) : (
                   <div className="solidity-input__array-item-content">
                     <span className="solidity-input__array-index">{index}:</span>
-                    <input
-                      type={getInputType()}
-                      value={item.value}
-                      onChange={(e) => handleArrayItemChange(index, e.target.value)}
-                      className="solidity-input__field"
-                      placeholder={`Enter ${baseType} value...`}
-                    />
-                    {baseType === 'address' && (
-                      <button
-                        type="button"
-                        onClick={() => setArrayItemZeroAddress(index)}
-                        className="solidity-input__zero-address-button"
-                        title="Set to zero address"
-                      >
-                        0x0
-                      </button>
-                    )}
+                    <div className="solidity-input__field-container">
+                      <input
+                        type={getInputType()}
+                        value={item.value}
+                        onChange={(e) => handleArrayItemChange(index, e.target.value)}
+                        className={`solidity-input__field ${!item.isValid ? 'solidity-input__field--error' : ''}`}
+                        placeholder={`Enter ${baseType} value...`}
+                      />
+                      {baseType === 'address' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const zeroAddress = '0x0000000000000000000000000000000000000000';
+                            // For simple address arrays, we don't need to parse JSON objects
+                            // Just set the zero address directly
+                            const newItems = [...arrayItems];
+
+                            // Always consider zero address valid
+                            newItems[index] = {
+                              value: zeroAddress,
+                              isValid: true
+                            };
+
+                            // Update array items and component state
+                            setArrayItems(newItems);
+                            setIsValid(true);
+                            setError('');
+
+                            // Update parent
+                            handleArrayItemChange(index, zeroAddress);
+                            onChange(JSON.stringify(newItems.map(i => i.value)), true);
+                          }}
+                          className="solidity-input__zero-address-button"
+                          title="Set to zero address"
+                        >
+                          0x0
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
                 <button
@@ -472,21 +1307,17 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
               </div>
             ))
           )}
-
-          <div className="solidity-input__array-controls">
-            <button
-              type="button"
-              onClick={addArrayItem}
-              className="solidity-input__array-add-button"
-            >
-              Add Item
-            </button>
-          </div>
         </div>
 
-        {!isValid && error && (
-          <div className="solidity-input__error">{error}</div>
-        )}
+        <div className="solidity-input__array-controls">
+          <button
+            type="button"
+            onClick={addArrayItem}
+            className="solidity-input__array-add-button"
+          >
+            {isTuple || isComplexTupleArray ? 'Add Tuple Item' : 'Add Item'}
+          </button>
+        </div>
       </div>
     );
   }
@@ -520,7 +1351,7 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
           {type === 'address' && (
             <button
               type="button"
-              onClick={setZeroAddress}
+              onClick={() => setComplexTupleAddressToZero(name)}
               className="solidity-input__zero-address-button"
               title="Set to zero address"
             >
@@ -535,4 +1366,4 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
       )}
     </div>
   );
-}; 
+};

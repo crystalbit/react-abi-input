@@ -34,14 +34,14 @@ export const Approve: Story = {
 
 export const Nested: Story = {
   args: {
-    abi: "function deployCode(string memory what, (uint256 a, (uint256 b, uint256 c)))",
+    abi: "function deployCode(string memory what, (uint256 a, (uint256 b, (uint256 c, uint256 d))))",
   },
 };
 
 // Arrays of basic types
 export const ArraysOfBasicTypes: Story = {
   args: {
-    abi: "function deployCode(string memory what, uint256[])",
+    abi: "function deployCode(string memory what, uint256[] a, address[] b)",
   },
 };
 
@@ -49,7 +49,7 @@ export const ArraysOfBasicTypes: Story = {
 // Nested with array of tuples
 export const NestedWithArrayOfTuples: Story = {
   args: {
-    abi: "function deployCode(string memory what, (uint256 a, (uint256 b, uint256 c))[])",
+    abi: "function arrayWithTuple(string memory what, (uint256 b, address c)[] bcArray)",
   },
 };
 

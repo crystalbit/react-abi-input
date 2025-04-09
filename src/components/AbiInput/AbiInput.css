@@ -44,169 +44,29 @@
 }
 
 /* Parameter indentation based on depth */
-.abi-input__parameter--depth-0 {
+.abi-input__parameter--path- {
   margin-left: 0;
 }
 
-.abi-input__parameter--depth-1 {
+/* First level of nesting */
+.abi-input__parameter[class*="abi-input__parameter--path-"][class*="-"] {
   margin-left: 1.5rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
+  border-left: 2px solid rgba(3, 102, 214, 0.8);
+  padding-left: 0.5rem;
 }
 
-.abi-input__parameter--depth-2 {
+/* Second level of nesting */
+.abi-input__parameter[class*="abi-input__parameter--path-"][class*="-"][class*="-"] {
   margin-left: 3rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
+  border-left: 2px solid rgba(3, 102, 214, 0.6);
+  padding-left: 0.5rem;
 }
 
-.abi-input__parameter--depth-3 {
+/* Third level of nesting */
+.abi-input__parameter[class*="abi-input__parameter--path-"][class*="-"][class*="-"][class*="-"] {
   margin-left: 4.5rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-.abi-input__parameter--depth-4 {
-  margin-left: 6rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-.abi-input__parameter--depth-5 {
-  margin-left: 7.5rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-.abi-input__parameter--depth-6 {
-  margin-left: 9rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-.abi-input__parameter--depth-7 {
-  margin-left: 10.5rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-.abi-input__parameter--depth-8 {
-  margin-left: 12rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-.abi-input__parameter--depth-9 {
-  margin-left: 13.5rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-.abi-input__parameter--depth-10 {
-  margin-left: 15rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-.abi-input__parameter--depth-11 {
-  margin-left: 16.5rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-.abi-input__parameter--depth-12 {
-  margin-left: 18rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-.abi-input__parameter--depth-13 {
-  margin-left: 19.5rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-.abi-input__parameter--depth-14 {
-  margin-left: 21rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-.abi-input__parameter--depth-15 {
-  margin-left: 22.5rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-.abi-input__parameter--depth-16 {
-  margin-left: 24rem;
-  border-left: 2px solid #e1e4e8;
-  padding-left: 1rem;
-}
-
-/* Colorize the border based on depth for better visual distinction */
-.abi-input__parameter--depth-1 {
-  border-left-color: rgba(3, 102, 214, 0.9);
-}
-
-.abi-input__parameter--depth-2 {
-  border-left-color: rgba(3, 102, 214, 0.8);
-}
-
-.abi-input__parameter--depth-3 {
-  border-left-color: rgba(3, 102, 214, 0.7);
-}
-
-.abi-input__parameter--depth-4 {
-  border-left-color: rgba(3, 102, 214, 0.6);
-}
-
-.abi-input__parameter--depth-5 {
-  border-left-color: rgba(3, 102, 214, 0.5);
-}
-
-.abi-input__parameter--depth-6 {
-  border-left-color: rgba(3, 102, 214, 0.8);
-}
-
-.abi-input__parameter--depth-7 {
-  border-left-color: rgba(3, 102, 214, 0.7);
-}
-
-.abi-input__parameter--depth-8 {
-  border-left-color: rgba(3, 102, 214, 0.6);
-}
-
-.abi-input__parameter--depth-9 {
-  border-left-color: rgba(3, 102, 214, 0.5);
-}
-
-.abi-input__parameter--depth-10 {
-  border-left-color: rgba(3, 102, 214, 0.4);
-}
-
-.abi-input__parameter--depth-11 {
-  border-left-color: rgba(3, 102, 214, 0.8);
-}
-
-.abi-input__parameter--depth-12 {
-  border-left-color: rgba(3, 102, 214, 0.7);
-}
-
-.abi-input__parameter--depth-13 {
-  border-left-color: rgba(3, 102, 214, 0.6);
-}
-
-.abi-input__parameter--depth-14 {
-  border-left-color: rgba(3, 102, 214, 0.5);
-}
-
-.abi-input__parameter--depth-15 {
-  border-left-color: rgba(3, 102, 214, 0.4);
-}
-
-.abi-input__parameter--depth-16 {
-  border-left-color: rgba(3, 102, 214, 0.3);
+  border-left: 2px solid rgba(3, 102, 214, 0.4);
+  padding-left: 0.5rem;
 }
 
 .abi-input__error {
@@ -301,6 +161,33 @@
   color: #2c3e50;
   overflow-x: auto;
   max-width: 100%;
+}
+
+.abi-input__preview-value:empty::after {
+  content: 'Empty';
+  color: #aaa;
+  font-style: italic;
+}
+
+.abi-input__preview-value:not(:empty) {
+  background-color: rgba(0, 0, 0, 0.02);
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Placeholder text styling */
+.abi-input__preview-value:not(:has(code)):not(:empty):not([class*="--bytecode"]):not(:has(*)) {
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* Make the bytecode value always display with a min-height */
+.abi-input__preview-value--bytecode {
+  min-height: 2.5em;
+  display: block;
 }
 
 .abi-input__preview-value--bytecode {
