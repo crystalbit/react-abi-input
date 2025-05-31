@@ -22,6 +22,8 @@ export const combineTx = (
   functionSignature: string,
   argsString: string
 ): string => {
+  console.log("FUNCTION SIGNATURE", functionSignature)
+  console.log("ARGS STRING", argsString)
   // replace all [] in argsString with ()
   argsString = argsString.replace(/\[/g, '(').replace(/\]/g, ')');
   try {
@@ -31,16 +33,15 @@ export const combineTx = (
       // Handle complex nested tuple structures safely
       // First, let's identify if we have a tuple structure
       const hasTuples = argsString.includes('(') && argsString.includes(')');
+      console.log("HAS TUPLES", hasTuples)
 
       if (hasTuples) {
         // For tuple arguments, we need a more sophisticated parsing approach
         const processedArgs = processNestedTuples(argsString);
+        console.log("PROCESSED ARGS", processedArgs)
         args = processedArgs;
       } else {
-        // Original approach for simple arguments
-        // First approach: try to parse as a JSON array directly
-        const wrappedArgs = `[${argsString}]`;
-
+        console.log("AS", argsString)
         // Handle Ethereum addresses and numbers separately
         // This is needed because addresses aren't valid JSON without quotes
         // and we want to maintain them in their original format
@@ -105,7 +106,7 @@ export const combineTx = (
       args,
     };
 
-    console.log("Encoding with args:", JSON.stringify(args));
+    console.log("Encoding with args:", args, JSON.stringify(args));
 
     // Generate the calldata
     const calldata = encodeFunctionData(params);
@@ -132,6 +133,7 @@ function processNestedTuples(argsString: string): unknown[] {
 
   // Helper function to process a single argument
   const processArg = (arg: string): unknown => {
+    console.log("PROCESSING ARG", arg)
     const trimmed = arg.trim();
 
     // Handle tuples

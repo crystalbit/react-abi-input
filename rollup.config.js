@@ -15,12 +15,13 @@ export default [
     input: "src/index.ts",
     output: [
       {
-        file: pkg.main,
+        file: "dist/cjs/index.cjs",
         format: "cjs",
         sourcemap: true,
+        exports: "named",
       },
       {
-        file: pkg.module,
+        file: "dist/esm/index.mjs",
         format: "esm",
         sourcemap: true,
       },
@@ -42,7 +43,7 @@ export default [
       }),
       terser(),
     ],
-    external: ["react", "react-dom"],
+    external: ["react", "react-dom", "viem"],
   },
   // This second output is disabled until we can generate proper type declarations
   /*

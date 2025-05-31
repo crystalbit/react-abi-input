@@ -104,7 +104,7 @@ const parseField = (field: string): ParsedTupleField | null => {
     // Extract the nested tuple part and the field name
     const tupleType = field.substring(0, closingIndex + 1);
     const nameMatch = field.substring(closingIndex + 1).trim().match(/^([a-zA-Z0-9_]+)$/);
-    const name = nameMatch ? nameMatch[1] : `param${Math.floor(Math.random() * 1000)}`;
+    const name = nameMatch ? nameMatch[1] : "unnamed param";
 
     // Recursively parse the nested tuple
     const { fields } = parseTupleType(tupleType);
@@ -501,51 +501,16 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
     }
   };
 
-  // Function to set an address to the zero address
-  const setZeroAddress = () => {
-    const zeroAddress = '0x0000000000000000000000000000000000000000';
-    onChange(zeroAddress, true);
-  };
-
-  // Function to set an array item address to the zero address
-  const setArrayItemZeroAddress = (index: number) => {
-    const newItems = [...arrayItems];
-    const zeroAddress = '0x0000000000000000000000000000000000000000';
-    newItems[index] = { value: zeroAddress, isValid: true };
-    setArrayItems(newItems);
-  };
-
   // Function to set an address field to zero in a complex tuple structure
-  const setComplexTupleAddressToZero = (fieldName: string) => {
-    try {
-      const tupleObj = JSON.parse(value || '{}');
-      const zeroAddress = '0x0000000000000000000000000000000000000000';
+  const setComplexTupleAddressToZero = () => {
+    const zeroAddress = '0x0000000000000000000000000000000000000000';
 
-      // Create the updated tuple value
-      const newTupleValue = JSON.stringify({
-        ...tupleObj,
-        [fieldName]: zeroAddress
-      });
+    // The zero address is always valid for address fields
+    setIsValid(true);
+    setError('');
 
-      // The zero address is always valid for address fields
-      setIsValid(true);
-      setError('');
-
-      // Pass the updated value back to parent with valid=true
-      onChange(newTupleValue, true);
-    } catch (e: unknown) {
-      // If parsing fails, create a new object with just this field set to zero
-      const zeroAddress = '0x0000000000000000000000000000000000000000';
-      const newTupleValue = JSON.stringify({
-        [fieldName]: zeroAddress
-      });
-
-      // Zero address is always valid
-      setIsValid(true);
-      setError('');
-
-      onChange(newTupleValue, true);
-    }
+    // Pass the updated value back to parent with valid=true
+    onChange(zeroAddress, true);
   };
 
   const getInputType = () => {
@@ -659,9 +624,6 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
           if (field.isComplex && field.components) {
             return (
               <div key={index} className="solidity-input__nested-tuple">
-                <label className="solidity-input__tuple-field-label">
-                  {field.name}:
-                </label>
                 <SolidityInput
                   type={field.type}
                   name={field.name}
@@ -677,7 +639,7 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
                       // Update validity state of the parent component based on child validity
                       if (!isFieldValid) {
                         setIsValid(false);
-                        setError(`Invalid value in nested field "${field.name}"`);
+                        // setError(`Invalid value in nested field "${field.name}"`);
                       } else {
                         // Check other fields before setting parent as valid
                         // This ensures we don't overwrite other field errors
@@ -707,7 +669,7 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
                       // Also update validity state 
                       if (!isFieldValid) {
                         setIsValid(false);
-                        setError(`Invalid value in nested field "${field.name}"`);
+                        // setError(`Invalid value in nested field "${field.name}"`);
                       } else {
                         setIsValid(true);
                         setError('');
@@ -822,7 +784,7 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
                   {field.type === 'address' && (
                     <button
                       type="button"
-                      onClick={() => setComplexTupleAddressToZero(field.name)}
+                      onClick={() => setComplexTupleAddressToZero()}
                       className="solidity-input__zero-address-button"
                       title="Set to zero address"
                     >
@@ -943,7 +905,7 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
                           {field.type === 'address' && (
                             <button
                               type="button"
-                              onClick={() => setComplexTupleAddressToZero(field.name)}
+                              onClick={() => setComplexTupleAddressToZero()}
                               className="solidity-input__zero-address-button"
                               title="Set to zero address"
                             >
@@ -1351,7 +1313,7 @@ export const SolidityInput: React.FC<SolidityInputProps> = ({
           {type === 'address' && (
             <button
               type="button"
-              onClick={() => setComplexTupleAddressToZero(name)}
+              onClick={() => setComplexTupleAddressToZero()}
               className="solidity-input__zero-address-button"
               title="Set to zero address"
             >

@@ -72,28 +72,47 @@ import { AbiInput } from 'react-abi';
 
 ### Setup
 
+Clone the repository and install dependencies:
+
 ```bash
 git clone https://github.com/yourusername/react-abi.git
 cd react-abi
-npm install
 ```
+
+For installation, you can use either:
+
+```bash
+# Using Yarn (recommended)
+yarn install
+
+# OR using npm with legacy-peer-deps flag
+npm install --legacy-peer-deps
+```
+
+> **Note:** When using npm, the `--legacy-peer-deps` flag is necessary due to peer dependency relationships in the project.
 
 ### Running Storybook
 
 ```bash
 npm run storybook
+# or
+yarn storybook
 ```
 
 ### Building
 
 ```bash
 npm run build
+# or
+yarn build
 ```
 
 ### Testing
 
 ```bash
 npm run test
+# or
+yarn test
 ```
 
 ## License

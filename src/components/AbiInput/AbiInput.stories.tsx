@@ -32,9 +32,15 @@ export const Approve: Story = {
   },
 };
 
+export const SimpleNested: Story = {
+  args: {
+    abi: "function deployCode((uint256 a, (uint256 b)) complexValue)",
+  },
+};
+
 export const Nested: Story = {
   args: {
-    abi: "function deployCode(string memory what, (uint256 a, (uint256 b, (uint256 c, uint256 d))))",
+    abi: "function deployCode(string memory what, (uint256 a, (uint256 b, (uint256 c, uint256 d)) fdfd) complexTuple)",
   },
 };
 

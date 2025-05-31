@@ -4,6 +4,7 @@ import { parseAbiItem } from 'viem';
 import { linearizeAbi, LinearizedParameter } from '../../helpers/linearizeAbi';
 import { combineTx } from '../../helpers/combineTx';
 import { SolidityInput } from '../SolidityInput';
+import { parseTypeSignature } from './helpers/methods';
 
 export interface AbiInputProps {
   /**
@@ -161,6 +162,7 @@ export const AbiInput: React.FC<AbiInputProps> = ({
       setError('');
       setIsValid(true);
       setAbiObject(parsedAbi);
+      console.log("PARSED ABI", parsedAbi)
       setLinearizedAbi(linearizeAbi(parsedAbi));
 
       // Generate and store the function signature with proper tuple destructuring
@@ -232,10 +234,12 @@ export const AbiInput: React.FC<AbiInputProps> = ({
 
     // Generate formatted parameter preview
     const rootParams = linearizedAbi.filter(param => (!param.path || param.path === '') && param.name);
+    console.log("ROOT PARAMS", rootParams)
     const formattedValues = rootParams.map(param => {
       const paramValue = param.name ? updatedParamValues[param.name] || '' : '';
       return formatValueForPreview(paramValue, param.type);
     });
+    console.log("FORMATTED VALUES", formattedValues)
 
     setValuePreview(formattedValues.join(', '));
     setPreviewUpdated(true);
@@ -313,6 +317,7 @@ export const AbiInput: React.FC<AbiInputProps> = ({
 
   // Format value for preview based on type
   const formatValueForPreview = (value: string, type: string): string => {
+    console.log("FORMATTING VALUE FOR PREVIEW", { value, type })
     // Handle string values as empty string is valid
     if (type === 'string') {
       return `"${value}"`;
@@ -329,7 +334,9 @@ export const AbiInput: React.FC<AbiInputProps> = ({
     // Extract tuple structure for correct ordering
     if (type.startsWith('(') && type.endsWith(')')) {
       try {
-        return formatTupleWithStructure(value, type);
+        const formatted = formatTupleWithStructure(value, type);
+        console.log("FORMATTED", formatted)
+        return formatted;
       } catch (e) {
         console.error('Error formatting tuple with structure:', e);
         return formatTuple(value); // Fallback to regular formatting
@@ -385,14 +392,17 @@ export const AbiInput: React.FC<AbiInputProps> = ({
 
   // Format tuple values according to the structure in the type signature
   const formatTupleWithStructure = (value: string, typeSignature: string): string => {
+    console.log("FORMATTING TUPLE WITH STRUCTURE", { value, typeSignature })
     const tupleObj = typeof value === 'string' ? JSON.parse(value) : value;
     if (!tupleObj || typeof tupleObj !== 'object' || Array.isArray(tupleObj)) {
       return '()';
     }
+    console.log("TUPLE OBJ", tupleObj)
 
     // Parse the tuple structure from type signature
     // Example: "(uint256 a, (uint256 b, uint256 ccc) param1)"
     const typesWithNames = parseTypeSignature(typeSignature);
+    console.log("TYPES WITH NAMES", typesWithNames)
     if (!typesWithNames.length) return formatTuple(value);
 
     // Format values according to the structure
@@ -430,68 +440,6 @@ export const AbiInput: React.FC<AbiInputProps> = ({
     }
 
     return `(${formattedValues.join(', ')})`;
-  };
-
-  // Parse a tuple type signature into components with types and names
-  const parseTypeSignature = (signature: string): Array<{ type: string, name: string }> => {
-    // Remove outer parentheses
-    const content = signature.slice(1, -1);
-    const result = [];
-
-    let currentPos = 0;
-    let parenDepth = 0;
-    let currentItem = '';
-
-    // Parse the signature character by character
-    while (currentPos < content.length) {
-      const char = content[currentPos];
-
-      if (char === '(' && parenDepth === 0) {
-        parenDepth++;
-        currentItem += char;
-      } else if (char === '(' && parenDepth > 0) {
-        parenDepth++;
-        currentItem += char;
-      } else if (char === ')' && parenDepth > 0) {
-        parenDepth--;
-        currentItem += char;
-      } else if (char === ',' && parenDepth === 0) {
-        // End of an item
-        if (currentItem.trim()) {
-          const { type, name } = parseTypeAndName(currentItem.trim());
-          result.push({ type, name });
-        }
-        currentItem = '';
-      } else {
-        currentItem += char;
-      }
-
-      currentPos++;
-    }
-
-    // Add the last item
-    if (currentItem.trim()) {
-      const { type, name } = parseTypeAndName(currentItem.trim());
-      result.push({ type, name });
-    }
-
-    return result;
-  };
-
-  // Parse a type and name from a type signature component
-  const parseTypeAndName = (item: string): { type: string, name: string } => {
-    // Handle cases like "uint256 a" or "(uint256 b, uint256 c) param1"
-    const parts = item.trim().split(' ');
-
-    if (parts.length === 1) {
-      // No name, just type
-      return { type: parts[0], name: '' };
-    } else {
-      // Last part is the name, everything else is the type
-      const name = parts[parts.length - 1];
-      const type = parts.slice(0, parts.length - 1).join(' ');
-      return { type, name };
-    }
   };
 
   return (

@@ -26,7 +26,7 @@ const formatTupleType = (input: AbiParameterWithComponents): string => {
   // Create a string representation of tuple components with their names
   const componentsStr = input.components
     .map((comp, index) => {
-      const paramName = comp.name || `param${index}`;
+      const paramName = comp.name ?? "";
 
       if (comp.type.includes('tuple') && comp.components) {
         // Recursively format nested tuples
@@ -100,7 +100,7 @@ export const linearizeAbi = (abi: AbiFunction) => {
     arrayDepth = 0
   ) => {
     inputs.forEach((input, index) => {
-      const paramName = input.name || `param${index}`;
+      const paramName = input.name || "tuple";
       const fullPath = prefix + paramName;
 
       // Handle all types including tuples
@@ -114,6 +114,15 @@ export const linearizeAbi = (abi: AbiFunction) => {
         ? formatTupleType(input)
         : input.type;
 
+      console.log({
+        ...input,
+        type: transformedType, // Use the transformed type
+        name: fullPath,
+        path: prefix,
+        originalType: input.type,
+        isElementOfArray: isInArray || isArray,
+        arrayDepth: currentArrayDepth
+      })
       // Add the parameter to linearized array
       linearized.push({
         ...input,
